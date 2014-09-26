@@ -48,30 +48,29 @@ public:
     cvtColor(target_, hsv, CV_BGR2HSV);       
     split(hsv, hsv_split);
     target_hue_ = hsv_split[0];
-    imshow("Target Image Histogram", target_hue_);
     // Calculate and normalize hue histogram
-//    calcHist(&target_hue_, 1, 0, 0, target_hue_hist_, 1, &hsize, &phranges);
-//    normalize(target_hue_hist_, target_hue_hist_, 0, 255, NORM_MINMAX);
+    calcHist(&target_hue_, 1, 0, Mat(), target_hue_hist_, 1, &hsize, &phranges);
+    normalize(target_hue_hist_, target_hue_hist_, 0, 255, NORM_MINMAX);
     // Create a display image of the histogram
-//    Mat histimg = Mat::zeros(200, 320, CV_8UC3);
-//    int binW = histimg.cols / hsize;
-//    Mat buf(1, hsize, CV_8UC3);
-//    for( int i = 0; i < hsize; i++ )
-//      buf.at<Vec3b>(i) = Vec3b(saturate_cast<uchar>(i*180./hsize), 255, 255);
-//    cvtColor(buf, buf, COLOR_HSV2BGR);    
-//    for( int i = 0; i < hsize; i++ )
-//    {
-//      int val = saturate_cast<int>(target_hue_hist_.at<float>(i)*histimg.rows/255);
-//      rectangle( histimg, Point(i*binW,histimg.rows),
-//      Point((i+1)*binW,histimg.rows - val),
-//      Scalar(buf.at<Vec3b>(i)), -1, 8 );
-//    }
+    Mat histimg = Mat::zeros(200, 320, CV_8UC3);
+    int binW = histimg.cols / hsize;
+    Mat buf(1, hsize, CV_8UC3);
+    for( int i = 0; i < hsize; i++ )
+      buf.at<Vec3b>(i) = Vec3b(saturate_cast<uchar>(i*180./hsize), 255, 255);
+    cvtColor(buf, buf, COLOR_HSV2BGR);    
+    for( int i = 0; i < hsize; i++ )
+    {
+      int val = saturate_cast<int>(target_hue_hist_.at<float>(i)*histimg.rows/255);
+      rectangle( histimg, Point(i*binW,histimg.rows),
+      Point((i+1)*binW,histimg.rows - val),
+      Scalar(buf.at<Vec3b>(i)), -1, 8 );
+    }
     // Display image of histogram
-//    imshow("Target Image Histogram", histimg);      
+    imshow("Target Image Histogram", histimg);      
   }
 
   ~MeanShiftTracker() {
-    destroyWindow("Target Image histogram");
+    destroyWindow("Target Image Histogram");
     destroyWindow("Target Image");
   }
 

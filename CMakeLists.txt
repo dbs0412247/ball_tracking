@@ -107,6 +107,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(mean_shift_node src/mean_shift_tracker.cpp)
+add_executable(camera_settings_node src/camera_settings.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -116,6 +117,10 @@ add_executable(mean_shift_node src/mean_shift_tracker.cpp)
 target_link_libraries(mean_shift_node
   ${catkin_LIBRARIES}
 )
+target_link_libraries(camera_settings_node
+  ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##
