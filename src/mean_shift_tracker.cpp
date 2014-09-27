@@ -24,32 +24,57 @@ Point origin;
 Rect selection;
 int vmin = 10, vmax = 256, smin = 30;
 
+
+static void onMouse( int event, int x, int y, int, void* )
+{
+    if( selectObject )
+    {
+        selection.x = MIN(x, origin.x);
+        selection.y = MIN(y, origin.y);
+        selection.width = std::abs(x - origin.x);
+        selection.height = std::abs(y - origin.y);
+
+        selection &= Rect(0, 0, image.cols, image.rows);
+    }
+
+    switch( event )
+    {
+    case EVENT_LBUTTONDOWN:
+        origin = Point(x,y);
+        selection = Rect(x,y,0,0);
+        selectObject = true;
+        break;
+    case EVENT_LBUTTONUP:
+        selectObject = false;
+        if( selection.width > 0 && selection.height > 0 )
+            trackObject = -1;
+        break;
+    }
+}
+
 class MeanShiftTracker {
+
+private:
+
+  // Private variable declarations
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
   Mat target_, target_hue_, target_backproj_, target_hue_hist_;
+ 
+  // private function declarations
+
+  // createHistogramImage is a wrapper for the steps and functions to 
+  // generate the image of a histogram
   
-public:
-  MeanShiftTracker(Mat* target_ptr)
-    : it_(nh_) {
-    target_ptr->copyTo(target_);
-    image_pub_ = it_.advertise("/meanshift_tracker/output", 1);
-    image_sub_ = it_.subscribe("/ps3_eye/image_raw", 1, &MeanShiftTracker::imageCb, this);
+  Mat createHueHistogramImage(Mat hue, int hsize) {
     // Pre-process target image for tracking    
-    int ch[] = {0, 0};
-    int hsize = 16;
+    int ch[] = {0, 0};    
     float hranges[] = {0,180};
     const float* phranges = hranges;
-    // Extract hue channel
-    Mat hsv;
-    vector<Mat> hsv_split;
-    cvtColor(target_, hsv, CV_BGR2HSV);       
-    split(hsv, hsv_split);
-    target_hue_ = hsv_split[0];
-    // Calculate and normalize hue histogram
-    calcHist(&target_hue_, 1, 0, Mat(), target_hue_hist_, 1, &hsize, &phranges);
+        // Calculate and normalize hue histogram
+    calcHist(&hue, 1, 0, Mat(), target_hue_hist_, 1, &hsize, &phranges);
     normalize(target_hue_hist_, target_hue_hist_, 0, 255, NORM_MINMAX);
     // Create a display image of the histogram
     Mat histimg = Mat::zeros(200, 320, CV_8UC3);
@@ -60,11 +85,31 @@ public:
     cvtColor(buf, buf, COLOR_HSV2BGR);    
     for( int i = 0; i < hsize; i++ )
     {
-      int val = saturate_cast<int>(target_hue_hist_.at<float>(i)*histimg.rows/255);
+      int val = 
+        saturate_cast<int>(target_hue_hist_.at<float>(i)*histimg.rows/255);
       rectangle( histimg, Point(i*binW,histimg.rows),
       Point((i+1)*binW,histimg.rows - val),
       Scalar(buf.at<Vec3b>(i)), -1, 8 );
     }
+    return histimg; 
+  }
+
+  
+public:
+  MeanShiftTracker(Mat* target_ptr)
+    : it_(nh_) {
+    target_ptr->copyTo(target_);
+    image_pub_ = it_.advertise("/meanshift_tracker/output", 1);
+    image_sub_ = it_.subscribe("/ps3_eye/image_raw", 1, &MeanShiftTracker::imageCb, this);
+    // Extract hue channel
+    Mat hsv;
+    vector<Mat> hsv_split;
+    cvtColor(target_, hsv, CV_BGR2HSV);       
+    split(hsv, hsv_split);
+    target_hue_ = hsv_split[0];
+   
+    Mat histimg = createHueHistogramImage(target_hue_, 180);
+
     // Display image of histogram
     imshow("Target Image Histogram", histimg);      
   }
@@ -72,6 +117,7 @@ public:
   ~MeanShiftTracker() {
     destroyWindow("Target Image Histogram");
     destroyWindow("Target Image");
+    destroyWindow("Current Histogram");
   }
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -88,6 +134,11 @@ public:
     }
 
     // begin meanshift
+    Mat hsv; vector<Mat> hsv_split;
+    cvtColor(cv_ptr->image, hsv, CV_BGR2HSV);
+    split(hsv, hsv_split);
+    Mat histimg = createHueHistogramImage(hsv_split[0], 180);
+    cv_ptr->image = histimg;
 
     // publish some image
     image_pub_.publish(cv_ptr->toImageMsg());
