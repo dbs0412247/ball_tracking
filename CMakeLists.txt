@@ -106,7 +106,8 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(mean_shift_node src/mean_shift_tracker.cpp)
+# add_executable(mean_shift_node src/mean_shift_tracker.cpp)
+ add_executable(cam_shift_node src/cam_shift_tracker.cpp)
 add_executable(camera_settings_node src/camera_settings.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -114,9 +115,12 @@ add_executable(camera_settings_node src/camera_settings.cpp)
 # add_dependencies(ball_tracking_node ball_tracking_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(mean_shift_node
+#target_link_libraries(mean_shift_node
+#  ${catkin_LIBRARIES}
+#)
+target_link_libraries(cam_shift_node
   ${catkin_LIBRARIES}
-)
+}
 target_link_libraries(camera_settings_node
   ${catkin_LIBRARIES}
 )

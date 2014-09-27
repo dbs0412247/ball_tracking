@@ -1,3 +1,10 @@
+/* 
+  - This code is heavily adapted from https://github.com/Itseez/opencv/blob/master/samples/cpp/camshiftdemo.cpp
+  - The purpose is the implement a camshift tracker that runs within the ROS framework. 
+  - Tracking is defined as the task of determining, given a bounding box of the object in the 
+    first frame of an image sequence, the position and size (sometimes also orientation) of 
+    the bounding box of the object in subsequent image frames. 
+*/
 #include <iostream>
 #include <vector>
 #include <opencv2/highgui/highgui.hpp>
