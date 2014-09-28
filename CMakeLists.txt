@@ -120,7 +120,7 @@ add_executable(camera_settings_node src/camera_settings.cpp)
 #)
 target_link_libraries(cam_shift_node
   ${catkin_LIBRARIES}
-}
+)
 target_link_libraries(camera_settings_node
   ${catkin_LIBRARIES}
 )
