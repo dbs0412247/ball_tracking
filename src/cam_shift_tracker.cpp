@@ -31,13 +31,16 @@ private:
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
+  image_transport::Publisher image_pub_hist_;
+  image_transport::Publisher image_pub_frame_;
   bool backprojMode, selectObject, showHist, paused;
   int trackObject, vmin, vmax, smin, hsize;
   Point origin;
   Rect selection, trackWindow;
   Mat hsv, hue, mask, hist, backproj, histimg;
   vector<Mat> hsv_split;
+  // For debugging
+  bool boolDebug;
 
 // private function declarations
 
@@ -48,7 +51,6 @@ private:
         selection.y = MIN(y, origin.y);
         selection.width = std::abs(x - origin.x);
         selection.height = std::abs(y - origin.y);
-
         selection &= Rect(0, 0, image.cols, image.rows);
     }
 
@@ -60,6 +62,7 @@ private:
         break;
     case EVENT_LBUTTONUP:
         selectObject = false;
+        boolDebug = true;
         if( selection.width > 0 && selection.height > 0 )
             trackObject = -1;
         break;
@@ -70,7 +73,6 @@ private:
   static void onMouse (int event, int x, int y, int, void* this_) {   
     static_cast<MeanShiftTracker*>(this_)->onMouse(event, x, y);
   }
-
 
   // createHistogramImage is a wrapper for the steps and functions to 
   // generate the image of a histogram
@@ -97,7 +99,8 @@ public:
   MeanShiftTracker()
     : it_(nh_) {
     // initialization code for ROS
-    image_pub_ = it_.advertise("/meanshift_tracker/output", 1);
+    image_pub_hist_  = it_.advertise("/meanshift_tracker/histogram", 1);
+    image_pub_frame_ = it_.advertise("/meanshift_tracker/frame", 1);
     image_sub_ = it_.subscribe("/ps3_eye/image_raw", 1, &MeanShiftTracker::imageCb, this);
     // initialization code for camshift tracking
     backprojMode = false;
@@ -119,6 +122,7 @@ public:
 
   ~MeanShiftTracker() {
     destroyWindow("Current Frame");
+    destroyWindow("Current Mask");
     destroyWindow("Current Hue Histogram");
   }
 
@@ -139,11 +143,12 @@ public:
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
+
     cv_ptr->image.copyTo(image);
     
     if (!paused) {      
 
-      cvtColor(image, hsv, CV_BGR2HSV);
+      cvtColor(image, hsv, CV_BGR2HSV);  
 
       if (trackObject) {
         int _vmin = vmin, _vmax = vmax;
@@ -166,13 +171,14 @@ public:
           trackObject = 1;
           histimg = createHueHistogramImage(hist, hsize);
         } // end if (trackObject < 0)
-
+        
         calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
         backproj &= mask;
         RotatedRect trackBox = CamShift(
           backproj, trackWindow,
           TermCriteria( TermCriteria::EPS | TermCriteria::COUNT, 10, 1 )
         );
+
         if( trackWindow.area() <= 1 ) {
           int 
             cols = backproj.cols, 
@@ -185,29 +191,53 @@ public:
             trackWindow.y + r) 
             & Rect(0, 0, cols, rows);
         }
+              
         if( backprojMode )
           cvtColor( backproj, image, COLOR_GRAY2BGR );
         ellipse( image, trackBox, Scalar(0,0,255), 3, CV_AA );
+
+        // show mask based on vmin, vmax and smin
+        /*
+        Mat image_new (image.rows, image.cols*2, image.type());
+        Mat left(image_new, Rect(0, 0, image.cols, image.rows));
+        image.copyTo(left);
+        Mat right(image_new, Rect(image.cols, 0, image.cols, image.rows));
+        vector<Mat> mask_premerge (3);
+        for (int i = 0; i < 3; i++) 
+          mask_premerge = mask;
+        Mat tmp; merge(mask_premerge, tmp);
+        tmp.copyTo(right);
+        image = image_new;*/
 
       } // end if (trackObject)
     } // end if (!paused)
     else if (trackObject < 0) 
       paused = false;
-
-    
+  
     if( selectObject && selection.width > 0 && selection.height > 0 ) {
       Mat roi(image, selection);
       bitwise_not(roi, roi);
-    }
+    }        
 
     imshow( "Current Frame", image );
     if (!histimg.empty()) 
       imshow( "Current Hue Histogram", histimg );
-
-    cv_ptr->image = histimg;
+    if (!mask.empty()) 
+      imshow( "Current Mask", mask);
 
     // publish some image
-    image_pub_.publish(cv_ptr->toImageMsg());
+    cv_bridge::CvImage cv_img_frame;
+    cv_bridge::CvImage cv_img_hist;    
+    ros::Time time = ros::Time::now();
+    cv_img_frame.header.stamp = time;
+    cv_img_hist.header.stamp = time;
+    cv_img_frame.encoding = enc::BGR8;
+    cv_img_hist.encoding = enc::BGR8;
+    cv_img_frame.image = image;
+    cv_img_hist.image = histimg;
+    
+    image_pub_frame_.publish  (cv_img_frame.toImageMsg());
+    image_pub_hist_.publish   (cv_img_hist.toImageMsg());
     waitKey(1);
   }
 };
