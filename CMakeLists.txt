@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rviz
   std_msgs
   tf
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -47,11 +48,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   CamshiftOutput.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -68,10 +68,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -86,7 +86,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ball_tracking
 #  CATKIN_DEPENDS cv_bridge geometry_msgs roscpp rviz std_msgs tf
-#  DEPENDS system_lib
+   DEPENDS message_runtime
 )
 
 ###########
@@ -107,7 +107,7 @@ include_directories(
 
 ## Declare a cpp executable
 # add_executable(mean_shift_node src/mean_shift_tracker.cpp)
- add_executable(cam_shift_node src/cam_shift_tracker.cpp)
+add_executable(cam_shift_node src/cam_shift_tracker.cpp)
 add_executable(camera_settings_node src/camera_settings.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -124,6 +124,7 @@ target_link_libraries(cam_shift_node
 target_link_libraries(camera_settings_node
   ${catkin_LIBRARIES}
 )
+add_dependencies(cam_shift_node ball_tracking_generate_messages_cpp)
 
 
 #############
