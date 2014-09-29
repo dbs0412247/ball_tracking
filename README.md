@@ -11,7 +11,7 @@ How to run:
 Topics published: 
 - Image Transport Messages: 
   /meanshift_tracker/frame 
-  /meanshift_tracker/histogram\
+  /meanshift_tracker/histogram
 - Custom ROS messages:
   /meanshift_tracker/camshift_output (rosmsg show CamshiftOutput.msg)
 
