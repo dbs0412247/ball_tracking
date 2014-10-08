@@ -1,0 +1,14 @@
+<launch>
+    <arg name="device" default="/dev/video1" />
+
+    <node name="ps3_eye_node" pkg="uvc_camera" type="uvc_camera_node" output="screen">
+      <remap from="image_raw" to="ps3_eye_node/image_raw" />
+      <param name="device" value="$(arg device)" />
+      <param name="width" value="640" />
+      <param name="height" value="480" />
+      <param name="format" value="jpeg" />
+      <param name="frame_rate" value="61" />
+      <param name="exposure" value="31" />
+    </node>
+</launch>
+

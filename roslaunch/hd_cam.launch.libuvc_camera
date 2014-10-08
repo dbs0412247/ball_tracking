@@ -1,0 +1,17 @@
+<launch>
+    <arg name="vend_id" default="0x05a3" />
+    <arg name="prod_id" default="0x9230" />
+
+    <node name="ps3_eye_node" pkg="libuvc_camera" type="camera_node" output="screen">
+      <remap from="image_raw" to="ps3_eye_node/image_raw" />
+      <param name="vendor" value="$(arg vend_id)" />
+      <param name="product" value="$(arg prod_id)" />
+      <param name="width" value="640" />
+      <param name="height" value="480" />
+      <param name="video_mode" value="yuyv" />
+      <param name="frame_rate" value="30.5" />
+      <param name="auto_exposure" value="0" />
+      <param name="exposure_absolute" value="15" />
+    </node>
+</launch>
+
