@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ball_tracking)
 
+#set(OpenCV_STATIC ON)
+#set(OpenCV_CUDA ON) 
+#set(OpenCV_DIR "/usr/local/share/OpenCV")
+#set(OpenCV_INCLUDE_DIRS "/usr/local/include")
+
+#find_package(OpenCV REQUIRED)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -13,6 +20,25 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   message_generation
 )
+
+set(OpenCV_DIR "/usr/local/share/OpenCV")
+set(OpenCV_INCLUDE_DIR "/usr/local/include/opencv")
+
+MESSAGE("BEFORE")
+MESSAGE("OpenCV DIR = ${OpenCV_DIR}" )
+MESSAGE("OpenCV INCLUDE DIR = ${OpenCV_INCLUDE_DIR}" )
+MESSAGE("OpenCV INCLUDE DIRS = ${OpenCV_INCLUDE_DIRS}" )
+MESSAGE("OpenCV LIBRARIES = ${OpenCV_LIBRARIES}" )
+
+find_package(OpenCV 2.4)
+#set(OpenCV_INCLUDE_DIRS "/usr/local/include")
+
+MESSAGE("AFTER")
+MESSAGE("OpenCV DIR = ${OpenCV_DIR}" )
+MESSAGE("OpenCV INCLUDE DIRS = ${OpenCV_INCLUDE_DIRS}" )
+MESSAGE("OpenCV LIBRARIES = ${OpenCV_LIBRARIES}" )
+
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -98,6 +124,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -109,6 +136,7 @@ include_directories(
 # add_executable(mean_shift_node src/mean_shift_tracker.cpp)
 add_executable(cam_shift_node src/cam_shift_tracker.cpp)
 add_executable(camera_settings_node src/camera_settings.cpp)
+add_executable(test_contours_node src/test_contours.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -124,6 +152,13 @@ target_link_libraries(cam_shift_node
 target_link_libraries(camera_settings_node
   ${catkin_LIBRARIES}
 )
+target_link_libraries(test_contours_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES} 
+  opencv_nonfree
+  opencv_ocl
+)
+
 add_dependencies(cam_shift_node ball_tracking_generate_messages_cpp)
 
 
